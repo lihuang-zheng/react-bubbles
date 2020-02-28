@@ -1,38 +1,40 @@
 import React, { useState } from "react";
 import axios from "axios";
 
-const Login = () => {
+const Login = props => {
   // make a post request to retrieve a token from the api
   // when you have handled the token, navigate to the BubblePage route
+
   const [user, setUser] = useState({
-    username: "",
-    password: ""
+    username: "Lambda School",
+    password: "i<3Lambd4"
   });
 
-  const handleChange = e => {
-    setUser({ ...user, [e.target.name]: event.target.value });
+  const handleChange = event => {
+    setUser({ ...user, [event.target.name]: event.target.value });
   };
 
-  const handleSubmit = e => {
-    e.preventDefault();
+  const handleSubmit = event => {
+    event.preventDefault();
 
     axios
       .post("http://localhost:5000/api/login", user)
-      .then(res => {
-        console.log("logged in successs: ", res.data.payload);
-        localStorage.setItem("token", res.data.payload);
+      .then(reponse => {
+        console.log("Successfully logged in:", reponse.data.payload);
+
+        localStorage.setItem("token", reponse.data.payload);
         props.history.push("/bubbles");
       })
-      .catch(err => {
-        console.log("failed to login: ", err);
+      .catch(error => {
+        console.log("Could not log in:", error);
       });
   };
 
   return (
-    <div className="login-form">
+    <div className="loginForm">
       <form name="login">
-        <div className="login-input-container">
-          <lable htmlFor="username">Username</lable>
+        <div className="loginInputContainer">
+          <label htmlFor="username">Username</label>
           <input
             type="text"
             name="username"
@@ -40,9 +42,8 @@ const Login = () => {
             onChange={handleChange}
           />
         </div>
-
-        <div className="login-input-container">
-          <lable htmlFor="password">password</lable>
+        <div className="loginInputContainer">
+          <label htmlFor="password">Password</label>
           <input
             type="password"
             name="password"
@@ -50,7 +51,6 @@ const Login = () => {
             onChange={handleChange}
           />
         </div>
-
         <button onClick={handleSubmit}>Log in</button>
       </form>
     </div>

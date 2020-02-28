@@ -10,6 +10,7 @@ const ColorList = ({ colors, updateColors }) => {
   console.log(colors);
   const [editing, setEditing] = useState(false);
   const [colorToEdit, setColorToEdit] = useState(initialColor);
+  const [colorToAdd, setcolorToAdd] = useState(initialColor);
 
   const editColor = color => {
     setEditing(true);
@@ -19,65 +20,99 @@ const ColorList = ({ colors, updateColors }) => {
   const saveEdit = e => {
     e.preventDefault();
 
+    console.log("Saving edits to color", colorToEdit);
+
     axiosWithAuth()
-      .put(`/api/colors/${colorToEdit.id}`, {
-        code: colorToEdit.code,
-        color: colorToEdit.color,
-        id: colorToEdit.id
+      .put(`"colors/" + color.id`, colorToEdit)
+      .then(response => {
+        console.log("Color edited:", response);
+
+        // rebuild color array in same order as before
+        let updatedColors = [];
+
+        for (let i = 0; i < colors.length; i++) {
+          if (colors[i].id === colorToEdit.id) {
+            updatedColors = [...updatedColors, colorToEdit];
+          } else {
+            updatedColors = [...updatedColors, colors[i]];
+          }
+        }
+
+        updateColors(updatedColors);
       })
-      .then(window.location.replace("/protected"))
-      .catch(err => console.log(err));
+      .catch(error => {
+        console.log("Couldn't edit color:", error);
+      });
   };
 
   const deleteColor = color => {
-    // make a delete request to delete this color
+    console.log("Deleting color", color);
+
     axiosWithAuth()
-      .delete(`/api/colors/${color.id}`)
-      .then(window.location.replace("/protected"))
-      .catch(err => console.log(err));
+      .delete("colors/" + color.id)
+      .then(response => {
+        console.log("Color deleted:", response);
+
+        let remainingColors = colors.filter(
+          existingColor => existingColor.id !== color.id
+        );
+        updateColors(remainingColors);
+      })
+      .catch(error => {
+        console.log("Couldn't delete color:", error);
+      });
   };
 
-  const handleSubmit = e => {
-    e.preventDefault();
+  const addColor = event => {
+    event.preventDefault();
+
+    console.log("Adding color", colorToAdd);
 
     axiosWithAuth()
-      .post("/api/colors", {
-        code: colorToEdit.code,
-        color: colorToEdit.color,
-        id: colors.length
+      .post("http://localhost:5000/api/colors", colorToAdd)
+      .then(response => {
+        console.log("Color added:", response);
+
+        updateColors([...colors, colorToAdd]);
       })
-      .then(window.location.replace("/protected"))
-      .catch(err => console.log(err));
+      .catch(error => {
+        console.log("Couldn't add color:", error);
+      });
   };
 
   return (
     <div className="colors-wrap">
       <p>colors</p>
 
-      <form onSubmit={handleSubmit} className="topForm">
-        <label>
-          color name:
-          <input
-            onChange={e =>
-              setColorToEdit({ ...colorToEdit, color: e.target.value })
-            }
-            value={colorToEdit.color}
-          />
-        </label>
-        <label>
-          hex code:
-          <input
-            onChange={e =>
-              setColorToEdit({
-                ...colorToEdit,
-                code: { hex: e.target.value }
-              })
-            }
-            value={colorToEdit.code.hex}
-          />
-        </label>
-        <button className="button">Submit</button>
-      </form>
+      <div className="addColorDiv">
+        <form name="addColor">
+          <h2>add color</h2>
+          <label>
+            color name:
+            <input
+              onChange={e =>
+                setcolorToAdd({ ...colorToAdd, color: e.target.value })
+              }
+              value={colorToAdd.color}
+            />
+          </label>
+          <label>
+            hex code:
+            <input
+              onChange={e =>
+                setcolorToAdd({
+                  ...colorToAdd,
+                  code: { hex: e.target.value }
+                })
+              }
+              value={colorToAdd.code.hex}
+            />
+          </label>
+          <div className="button-row">
+            <button onClick={addColor}>add</button>
+          </div>
+        </form>
+      </div>
 
       <ul>
         {colors.map(color => (
@@ -132,7 +167,6 @@ const ColorList = ({ colors, updateColors }) => {
         </form>
       )}
       <div className="spacer" />
-      {/* stretch - build another form here to add a color */}
     </div>
   );
 };
